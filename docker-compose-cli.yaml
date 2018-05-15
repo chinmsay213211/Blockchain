@@ -1,0 +1,283 @@
+version: '2'
+
+services:
+  couchdbTristar:
+    container_name: couchdbTristar
+    image: hyperledger/fabric-couchdb:x86_64-1.0.0
+    ports:
+      - "5984:5984"
+    environment:
+      DB_URL: http://localhost:5984/peer_db
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+
+  couchdbAgility:
+    container_name: couchdbAgility
+    image: hyperledger/fabric-couchdb:x86_64-1.0.0
+    ports:
+      - "6984:5984"
+    environment:
+      DB_URL: http://localhost:6984/peer_db
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+
+  couchdbBlockGemini:
+    container_name: couchdbBlockGemini
+    image: hyperledger/fabric-couchdb:x86_64-1.0.0
+    ports:
+      - "7984:5984"
+    environment:
+      DB_URL: http://localhost:7984/peer_db
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+
+  orderer.example.com:
+    container_name: orderer.example.com
+    image: hyperledger/fabric-orderer:x86_64-1.0.0
+    environment:
+      - CORE_VM_DOCKER_HOSTCONFIG_NETWORKMODE=tristarpoc1blockchain_default
+      - ORDERER_GENERAL_LOGLEVEL=debug
+      - ORDERER_GENERAL_LISTENADDRESS=0.0.0.0
+      - ORDERER_GENERAL_GENESISMETHOD=file
+      - ORDERER_GENERAL_GENESISFILE=/var/hyperledger/orderer/genesis.block
+      - ORDERER_GENERAL_LOCALMSPID=OrdererMSP
+      - ORDERER_GENERAL_LOCALMSPDIR=/var/hyperledger/orderer/msp
+      # enabled TLS
+      - ORDERER_GENERAL_TLS_ENABLED=true
+      - ORDERER_GENERAL_TLS_PRIVATEKEY=/var/hyperledger/orderer/tls/server.key
+      - ORDERER_GENERAL_TLS_CERTIFICATE=/var/hyperledger/orderer/tls/server.crt
+      - ORDERER_GENERAL_TLS_ROOTCAS=[/var/hyperledger/orderer/tls/ca.crt]
+    working_dir: /opt/gopath/src/github.com/hyperledger/fabric
+    command: orderer
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+      - ./channel-artifacts/genesis.block:/var/hyperledger/orderer/genesis.block
+      - ./crypto-config/ordererOrganizations/example.com/orderers/orderer.example.com/msp:/var/hyperledger/orderer/msp
+      - ./crypto-config/ordererOrganizations/example.com/orderers/orderer.example.com/tls/:/var/hyperledger/orderer/tls
+      - ./crypto-config/peerOrganizations/org_tristar.example.com/peers/peer0.org_tristar.example.com/:/var/hyperledger/peertristar
+      - ./crypto-config/peerOrganizations/org_agility.example.com/peers/peer0.org_agility.example.com/:/var/hyperledger/peeragility
+      - ./crypto-config/peerOrganizations/org_blockgemini.example.com/peers/peer0.org_blockgemini.example.com:/var/hyperledger/peerblockgemini
+    ports:
+      - 7050:7050
+
+  ca.org_tristar.example.com:
+    image: hyperledger/fabric-ca:x86_64-1.0.0
+    environment:
+      - CORE_VM_DOCKER_HOSTCONFIG_NETWORKMODE=tristarpoc1blockchain_default
+      - FABRIC_CA_HOME=/etc/hyperledger/fabric-ca-server
+      - FABRIC_CA_SERVER_CA_CERTFILE=/etc/hyperledger/fabric-ca-server-config/ca.org_tristar.example.com-cert.pem
+      - FABRIC_CA_SERVER_CA_KEYFILE=/etc/hyperledger/fabric-ca-server-config/2838dd6a315caf38276af497cc0498a7561adf939140ff184a6bf4bb449eeff0_sk
+      - FABRIC_CA_SERVER_TLS_ENABLED=true
+      - FABRIC_CA_SERVER_TLS_CERTFILE=/etc/hyperledger/fabric-ca-server-config/ca.org_tristar.example.com-cert.pem
+      - FABRIC_CA_SERVER_TLS_KEYFILE=/etc/hyperledger/fabric-ca-server-config/2838dd6a315caf38276af497cc0498a7561adf939140ff184a6bf4bb449eeff0_sk
+    ports:
+      - "7054:7054"
+    command: sh -c 'fabric-ca-server start -b admin:adminpw -d'
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+      - ./crypto-config/peerOrganizations/org_tristar.example.com/ca/:/etc/hyperledger/fabric-ca-server-config
+    container_name: ca_peerOrgTristar
+
+  ca.org_agility.example.com:
+    image: hyperledger/fabric-ca:x86_64-1.0.0
+    environment:
+      - CORE_VM_DOCKER_HOSTCONFIG_NETWORKMODE=tristarpoc1blockchain_default
+      - FABRIC_CA_HOME=/etc/hyperledger/fabric-ca-server
+      - FABRIC_CA_SERVER_CA_CERTFILE=/etc/hyperledger/fabric-ca-server-config/ca.org_agility.example.com-cert.pem
+      - FABRIC_CA_SERVER_CA_KEYFILE=/etc/hyperledger/fabric-ca-server-config/724be4b947d7b1f8450b97df1ff92015bb138c46532af71c4529c5bab5575671_sk
+      - FABRIC_CA_SERVER_TLS_ENABLED=true
+      - FABRIC_CA_SERVER_TLS_CERTFILE=/etc/hyperledger/fabric-ca-server-config/ca.org_agility.example.com-cert.pem
+      - FABRIC_CA_SERVER_TLS_KEYFILE=/etc/hyperledger/fabric-ca-server-config/724be4b947d7b1f8450b97df1ff92015bb138c46532af71c4529c5bab5575671_sk
+    ports:
+      - "8054:7054"
+    command: sh -c 'fabric-ca-server start -b admin:adminpw -d'
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+      - ./crypto-config/peerOrganizations/org_agility.example.com/ca/:/etc/hyperledger/fabric-ca-server-config
+    container_name: ca_peerOrgAgility
+
+  ca.org_blockgemini.example.com:
+    image: hyperledger/fabric-ca:x86_64-1.0.0
+    environment:
+      - CORE_VM_DOCKER_HOSTCONFIG_NETWORKMODE=tristarpoc1blockchain_default
+      - FABRIC_CA_HOME=/etc/hyperledger/fabric-ca-server
+      - FABRIC_CA_SERVER_CA_CERTFILE=/etc/hyperledger/fabric-ca-server-config/ca.org_blockgemini.example.com-cert.pem
+      - FABRIC_CA_SERVER_CA_KEYFILE=/etc/hyperledger/fabric-ca-server-config/454755fcf9848709e07fbf412544149e538b36e1785346ee47008ec0596e948e_sk
+      - FABRIC_CA_SERVER_TLS_ENABLED=true
+      - FABRIC_CA_SERVER_TLS_CERTFILE=/etc/hyperledger/fabric-ca-server-config/ca.org_blockgemini.example.com-cert.pem
+      - FABRIC_CA_SERVER_TLS_KEYFILE=/etc/hyperledger/fabric-ca-server-config/454755fcf9848709e07fbf412544149e538b36e1785346ee47008ec0596e948e_sk
+    ports:
+      - "9054:7054"
+    command: sh -c 'fabric-ca-server start -b admin:adminpw -d'
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+      - ./crypto-config/peerOrganizations/org_blockgemini.example.com/ca/:/etc/hyperledger/fabric-ca-server-config
+    container_name: ca_peerOrgBlockGemini
+
+  peer0.org_tristar.example.com:
+    container_name: peer0.org_tristar.example.com
+    image: hyperledger/fabric-peer:x86_64-1.0.0
+    environment:
+      # Making peer work as CLI
+      - ORDERER_CA=/var/hyperledger/orderer/msp/tlsca/tlsca.example.com-cert.pem
+      - CHANNEL_NAME=mainchannel
+      - CHAINCODE=companies_chaincode
+      # END
+      - CORE_VM_DOCKER_HOSTCONFIG_NETWORKMODE=tristarpoc1blockchain_default
+      - CORE_VM_ENDPOINT=unix:///host/var/run/docker.sock
+      - CORE_LOGGING_LEVEL=DEBUG
+      - CORE_PEER_ENDORSER_ENABLED=true
+      - CORE_PEER_GOSSIP_USELEADERELECTION=true
+      - CORE_PEER_GOSSIP_ORGLEADER=false
+      - CORE_PEER_PROFILE_ENABLED=true
+      # TLS
+      - CORE_PEER_GOSSIP_SKIPHANDSHAKE=true
+      - CORE_PEER_MSPCONFIGPATH=/etc/hyperledger/fabric/msp
+      - CORE_PEER_TLS_ENABLED=true
+      - CORE_PEER_TLS_CERT_FILE=/etc/hyperledger/fabric/tls/server.crt
+      - CORE_PEER_TLS_KEY_FILE=/etc/hyperledger/fabric/tls/server.key
+      - CORE_PEER_TLS_ROOTCERT_FILE=/etc/hyperledger/fabric/tls/ca.crt
+      #
+      - CORE_PEER_ID=peer0.org_tristar.example.com
+      - CORE_PEER_ADDRESS=peer0.org_tristar.example.com:7051
+      - CORE_PEER_GOSSIP_EXTERNALENDPOINT=peer0.org_tristar.example.com:7051
+      - CORE_PEER_LOCALMSPID=OrgTristarMSP
+      # CouchDB
+      - CORE_LEDGER_STATE_STATEDATABASE=CouchDB
+      - CORE_LEDGER_STATE_COUCHDBCONFIG_COUCHDBADDRESS=couchdbTristar:5984
+    volumes:
+        - /etc/localtime:/etc/localtime:ro
+        - /var/run/:/host/var/run/
+        - ./crypto-config/peerOrganizations/org_tristar.example.com/peers/peer0.org_tristar.example.com/msp:/etc/hyperledger/fabric/msp
+        - ./crypto-config/peerOrganizations/org_tristar.example.com/peers/peer0.org_tristar.example.com/tls:/etc/hyperledger/fabric/tls
+    working_dir: /opt/gopath/src/github.com/hyperledger/fabric/peer
+    command: peer node start
+    ports:
+      - 7051:7051
+      - 7053:7053
+    depends_on:
+      - orderer.example.com
+      - couchdbTristar
+
+  peer0.org_agility.example.com:
+    container_name: peer0.org_agility.example.com
+    image: hyperledger/fabric-peer:x86_64-1.0.0
+    environment:
+      # Making peer work as CLI
+      - ORDERER_CA=/var/hyperledger/orderer/msp/tlsca/tlsca.example.com-cert.pem
+      - CHANNEL_NAME=mainchannel
+      - CHAINCODE=companies_chaincode
+      # END
+      - CORE_VM_DOCKER_HOSTCONFIG_NETWORKMODE=tristarpoc1blockchain_default
+      - CORE_VM_ENDPOINT=unix:///host/var/run/docker.sock
+      - CORE_LOGGING_LEVEL=DEBUG
+      - CORE_PEER_ENDORSER_ENABLED=true
+      - CORE_PEER_GOSSIP_USELEADERELECTION=true
+      - CORE_PEER_GOSSIP_ORGLEADER=false
+      - CORE_PEER_PROFILE_ENABLED=true
+      # TLS
+      - CORE_PEER_GOSSIP_SKIPHANDSHAKE=true
+      - CORE_PEER_MSPCONFIGPATH=/etc/hyperledger/fabric/msp
+      - CORE_PEER_TLS_ENABLED=true
+      - CORE_PEER_TLS_CERT_FILE=/etc/hyperledger/fabric/tls/server.crt
+      - CORE_PEER_TLS_KEY_FILE=/etc/hyperledger/fabric/tls/server.key
+      - CORE_PEER_TLS_ROOTCERT_FILE=/etc/hyperledger/fabric/tls/ca.crt
+      #
+      - CORE_PEER_ID=peer0.org_agility.example.com
+      - CORE_PEER_ADDRESS=peer0.org_agility.example.com:7051
+      - CORE_PEER_GOSSIP_EXTERNALENDPOINT=peer0.org_agility.example.com:7051
+      - CORE_PEER_LOCALMSPID=OrgAgilityMSP
+      # CouchDB
+      - CORE_LEDGER_STATE_STATEDATABASE=CouchDB
+      - CORE_LEDGER_STATE_COUCHDBCONFIG_COUCHDBADDRESS=couchdbAgility:5984
+    volumes:
+        - /etc/localtime:/etc/localtime:ro
+        - /var/run/:/host/var/run/
+        - ./crypto-config/peerOrganizations/org_agility.example.com/peers/peer0.org_agility.example.com/msp:/etc/hyperledger/fabric/msp
+        - ./crypto-config/peerOrganizations/org_agility.example.com/peers/peer0.org_agility.example.com/tls:/etc/hyperledger/fabric/tls
+    command: peer node start
+    ports:
+      - 8051:7051
+      - 8053:7053
+    depends_on:
+      - orderer.example.com
+      - couchdbAgility
+
+  peer0.org_blockgemini.example.com:
+    container_name: peer0.org_blockgemini.example.com
+    image: hyperledger/fabric-peer:x86_64-1.0.0
+    environment:
+      # Making peer work as CLI
+      - ORDERER_CA=/var/hyperledger/orderer/msp/tlsca/tlsca.example.com-cert.pem
+      - CHANNEL_NAME=mainchannel
+      - CHAINCODE=companies_chaincode
+      # END
+      - CORE_VM_DOCKER_HOSTCONFIG_NETWORKMODE=tristarpoc1blockchain_default
+      - CORE_VM_ENDPOINT=unix:///host/var/run/docker.sock
+      - CORE_LOGGING_LEVEL=DEBUG
+      - CORE_PEER_ENDORSER_ENABLED=true
+      - CORE_PEER_GOSSIP_USELEADERELECTION=true
+      - CORE_PEER_GOSSIP_ORGLEADER=false
+      - CORE_PEER_PROFILE_ENABLED=true
+      # TLS
+      - CORE_PEER_GOSSIP_SKIPHANDSHAKE=true
+      - CORE_PEER_MSPCONFIGPATH=/etc/hyperledger/fabric/msp
+      - CORE_PEER_TLS_ENABLED=true
+      - CORE_PEER_TLS_CERT_FILE=/etc/hyperledger/fabric/tls/server.crt
+      - CORE_PEER_TLS_KEY_FILE=/etc/hyperledger/fabric/tls/server.key
+      - CORE_PEER_TLS_ROOTCERT_FILE=/etc/hyperledger/fabric/tls/ca.crt
+      #
+      - CORE_PEER_ID=peer0.org_blockgemini.example.com
+      - CORE_PEER_ADDRESS=peer0.org_blockgemini.example.com:7051
+      - CORE_PEER_GOSSIP_EXTERNALENDPOINT=peer0.org_blockgemini.example.com:7051
+      - CORE_PEER_LOCALMSPID=OrgBlockGeminiMSP
+      # CouchDB
+      - CORE_LEDGER_STATE_STATEDATABASE=CouchDB
+      - CORE_LEDGER_STATE_COUCHDBCONFIG_COUCHDBADDRESS=couchdbBlockGemini:5984
+    volumes:
+        - /etc/localtime:/etc/localtime:ro
+        - /var/run/:/host/var/run/
+        - ./crypto-config/peerOrganizations/org_blockgemini.example.com/peers/peer0.org_blockgemini.example.com/msp:/etc/hyperledger/fabric/msp
+        - ./crypto-config/peerOrganizations/org_blockgemini.example.com/peers/peer0.org_blockgemini.example.com/tls:/etc/hyperledger/fabric/tls
+    working_dir: /opt/gopath/src/github.com/hyperledger/fabric/peer
+    command: peer node start
+    ports:
+      - 9051:7051
+      - 9053:7053
+    depends_on:
+      - orderer.example.com
+      - couchdbBlockGemini
+
+  cli:
+    container_name: cli
+    image: hyperledger/fabric-tools:x86_64-1.0.0
+    tty: true
+    environment:
+      - CORE_VM_DOCKER_HOSTCONFIG_NETWORKMODE=tristarpoc1blockchain_default
+      - CHANNEL_NAME=mainchannel
+      - GOPATH=/opt/gopath
+      - ORDERER_CA=/opt/gopath/src/github.com/hyperledger/fabric/peer/crypto/ordererOrganizations/example.com/tlsca/tlsca.example.com-cert.pem
+      - CORE_VM_ENDPOINT=unix:///host/var/run/docker.sock
+      - CORE_LOGGING_LEVEL=DEBUG
+      - CORE_PEER_ID=cli
+      - CORE_PEER_ADDRESS=peer0.org_tristar.example.com:7051
+      - CORE_PEER_LOCALMSPID=OrgTristarMSP
+      - CORE_PEER_TLS_ENABLED=true
+      - CORE_PEER_TLS_CERT_FILE=/opt/gopath/src/github.com/hyperledger/fabric/peer/crypto/peerOrganizations/org_tristar.example.com/peers/peer0.org_tristar.example.com/tls/server.crt
+      - CORE_PEER_TLS_KEY_FILE=/opt/gopath/src/github.com/hyperledger/fabric/peer/crypto/peerOrganizations/org_tristar.example.com/peers/peer0.org_tristar.example.com/tls/server.key
+      - CORE_PEER_TLS_ROOTCERT_FILE=/opt/gopath/src/github.com/hyperledger/fabric/peer/crypto/peerOrganizations/org_tristar.example.com/peers/peer0.org_tristar.example.com/tls/ca.crt
+      - CORE_PEER_MSPCONFIGPATH=/opt/gopath/src/github.com/hyperledger/fabric/peer/crypto/peerOrganizations/org_tristar.example.com/users/Admin@org_tristar.example.com/msp
+    working_dir: /opt/gopath/src/github.com/hyperledger/fabric/peer
+    command: /bin/bash -c './scripts/script.sh ${CHANNEL_NAME}; sleep $TIMEOUT'
+    volumes:
+        - /etc/localtime:/etc/localtime:ro
+        - /var/run/:/host/var/run/
+        - ./channel-artifacts:/opt/gopath/src/github.com/hyperledger/fabric/peer/channel-artifacts
+        - ./crypto-config:/opt/gopath/src/github.com/hyperledger/fabric/peer/crypto/
+        - ./chaincode/:/opt/gopath/src/github.com/hyperledger/fabric/examples/chaincode/go
+        - ./scripts:/opt/gopath/src/github.com/hyperledger/fabric/peer/scripts/
+        - ./chaincode/lib:/opt/gopath/src/github.com/lib
+    depends_on:
+      - peer0.org_tristar.example.com
+      - peer0.org_agility.example.com
+      - peer0.org_blockgemini.example.com
